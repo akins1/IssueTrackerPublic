@@ -1,0 +1,686 @@
+﻿@model IssueTracker.Models.ViewModels.DashboardViewModel
+
+@using IssueTracker.Models.Enums
+@using Microsoft.AspNetCore.Identity
+@using IssueTracker.Services.Interfaces
+
+@inject UserManager<IssueTrackerUser> UserManager
+@inject IITRolesService RoleService
+@inject IITProjectService ProjectService
+@inject IITTicketService TicketService
+
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    IssueTrackerUser ITUser = await UserManager.GetUserAsync(User);
+    //User File Data data:image/*;base64,@(Convert.ToBase64String(ITUser.AvatarFileData))
+    int companyId = ITUser.CompanyId.Value;
+
+    int activeProjectsCount = Model.Projects.Where(p => p.StartDate < DateTime.Now && p.EndDate > DateTime.Now).Count();
+    int unassignedProjectsCount = (await ProjectService.GetUnassignedProjectsByCompany(companyId)).Count();
+    int assignedProjectsCount = (await ProjectService.GetAllProjectsByCompany(companyId)).Count() - unassignedProjectsCount;
+    int unassignedTicketsCount = (await TicketService.GetUnassignedTicketsAsync(companyId)).Count();
+    int assignedTicketsCount = (await TicketService.GetAllTicketsByCompanyAsync(companyId)).Count() - unassignedTicketsCount;
+    int myTicketsCount = (await TicketService.GetTicketsByUserIdAsync(ITUser.Id, companyId)).Count();
+
+    int[] projectPriorityChartData = { };
+
+
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Dashboard</h1>
+            </div><!-- /.col -->
+            <!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+                <div class="container-fluid">
+                    <!-- Small boxes (Stat box) -->
+                    <div class="row">
+                        <div class="col-lg-3 col-6">
+                            <!-- small box -->
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3>@Model.Projects.Count()</h3>
+
+                                    <p>Total Projects</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="ion ion-ios-copy"></i>
+                                </div>
+
+                                <div class="card-body" style="background-color:white; margin:15px; border-radius:4px">
+                                    <p style="color:black;">By Priority</p>
+                                    <canvas id="donutChartProjectPriority" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                </div>
+
+                                <a asp-controller="Projects" asp-action="AllProjects" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                            
+                        </div>
+                         <!-- ./col -->
+                        <div class="col-lg-3 col-6">
+                            <!-- small box -->
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3>@Model.Tickets.Count()</h3>
+
+                                    <p>Total Tickets</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="ion ion-ios-copy"></i>
+                                </div>
+
+                                <div class="card-body" style="background-color:white; margin:15px; border-radius:4px">
+                                    <p style="color:black;">By Priority</p>
+                                    <canvas id="donutChartTicketPriority" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                </div>
+                                <a asp-controller="Tickets" asp-action="AllTickets" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                        </div>
+                        <!-- ./col -->
+                        <div class="col-lg-3 col-6">
+                            <!-- small box -->
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>@unassignedProjectsCount <!--<sup style="font-size: 20px">%</sup>--></h3>
+
+                                    <p>Unassigned Projects</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="ion ion-stats-bars"></i>
+                                </div>
+                                <div class="card-body" style="background-color:white; margin:15px; border-radius:4px">
+                                    <p style="color:black;">Assigned vs. Unassigned</p>
+                                    <canvas id="donutChartUnassignedProjects" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                </div>
+                                
+                                <a asp-controller="Projects" asp-action="UnassignedProjects" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                        </div>
+                        <!-- ./col -->
+                        <div class="col-lg-3 col-6">
+                            <!-- small box -->
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>@unassignedTicketsCount</h3>
+
+                                    <p>Unassigned Tickets</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="ion ion-person-add"></i>
+                                </div>
+
+                                <div class="card-body" style="background-color:white; margin:15px; border-radius:4px">
+                                    <p style="color:black;">Assigned vs. Unassigned</p>
+                                    <canvas id="donutChartUnassignedTickets" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                </div>
+
+                                <a asp-controller="Tickets" asp-action="UnassignedTickets" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                        </div>
+                       
+                        <!-- ./col -->
+                    </div>
+                    <!-- /.row -->
+
+                    <!-- Main row -->
+                    <div class="row">
+                        <!-- Left col -->
+                        <section class="col-lg-7 connectedSortable">
+                            <!-- Custom tabs (Charts with tabs)-->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-chart-pie mr-1"></i>
+                                        Tickets and Developers by Project
+                                    </h3>
+                                    
+                                </div><!-- /.card-header -->
+                                <div class="card-body">
+                                    <div class="tab-content p-0">
+                                        <!-- Morris chart - Sales -->
+                                        <!--<div class="chart tab-pane active" id="revenue-chart"
+                                             style="position: relative; height: 300px;">
+                                            <canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>
+                                        </div>
+                                        <div class="chart tab-pane" id="sales-chart" style="position: relative; height: 300px;">
+                                            <canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>
+                                        </div>-->
+                                        <div class="chart tab-pane active" id="revenue-chart">
+                            <canvas id="ticketsDevsBarChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                        </div>
+                                    </div>
+                                </div><!-- /.card-body -->
+                            </div>
+                            <!-- /.card -->
+                            
+                            
+    
+                        </section>
+                        <!-- /.Left col -->
+                        <!-- right col (We are only adding the ID to make the widgets sortable)-->
+                        <section class="col-lg-5 connectedSortable">
+
+                            <!-- Map card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        Members
+                                    </h3>
+                                    <!-- card tools -->
+                                    <div class="card-tools">
+                                        
+                                    </div>
+                                    <!-- /.card-tools -->
+                                </div>
+                                <div class="card-body" style="justify-content:center">
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover text-nowrap">
+                  <thead style="color:black">
+                    <tr>
+                      <th>Name</th>
+                                    <!--<th>Email</th>-->
+                      <th>Role</th>
+
+                    </tr>
+                  </thead>
+                  <tbody>
+                      @foreach(IssueTrackerUser member in Model.Company.Members)
+                      {
+                        string roleName = (await RoleService.GetUserRolesAsync(member)).FirstOrDefault();
+                        if (roleName == "ProjectManager") { roleName = "Project Manager"; }
+                        if (roleName == null) { roleName = "No Role"; }
+                        <tr>
+                          <td>@member.FullName</td>
+                          <!--<td><small>@member.Email</small></td>-->
+                          <td><span class="tag tag-success"><small>@roleName</small></span></td>
+                        </tr>
+                      }
+                    
+                  </tbody>
+                </table>
+              </div>
+                                </div>
+                                <!-- /.card-body-->
+                                <div class="card-footer bg-transparent">
+                                    
+                                    <!-- /.row -->
+                                </div>
+                            </div>
+                            <!-- /.card -->
+                            <!-- solid sales graph -->
+                            
+                            <!-- /.card -->
+                            <!-- Calendar -->
+                            
+                            <!-- /.card -->
+                        </section>
+                        <!-- right col -->
+                                                <section class="" >
+            <div>
+                            <div class="card col-12 text-wrap">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ion ion-clipboard mr-1"></i>
+                            My Projects
+                        </h3>
+
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body" style="width:80vw">
+                        <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-wrap">
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Project Manager</th>
+                      <th>Company</th>
+                      <th>Priority</th>
+                      <th>
+                          Start/End Date
+                      </th>
+                      <th>Archived</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      @{
+                          int countProjects = 0;
+}
+                                    @if (Model.UserProjects.Count == 0)
+                                    {
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td><h4>No Projects</h4></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    }
+                      @foreach(Project project in Model.UserProjects)
+                      {
+                          
+                          
+                          if (countProjects == 10)
+                          {
+                              break;
+                          }
+                          countProjects += 1;
+                          <tr>
+                          <td> <img id="imageFileData" style="width:100px;height:80px" class="img-fluid img-thumbnail" src="data:image/*;base64,@(Convert.ToBase64String(project.ImageFileData))" /></td>
+                          <td>@project.Name</td>
+                          <td>@project.Description</td>
+                          @if ((await ProjectService.GetProjectManagerAsync(project.Id)) == null)
+                          {
+                              if ((await RoleService.IsUserInRoleAsync(ITUser, nameof(RoleEnum.Admin))))
+                              {
+                                  <td> <a asp-controller="Projects" asp-action="AssignPM" asp-route-projectId="@project.Id" class="btn btn-info">Assign PM</a></td>
+                              }
+                              else
+                              {
+                                  <td>No PM</td>
+                              }
+                              
+                          }
+                          else 
+                          {
+                            <td>@((await ProjectService.GetProjectManagerAsync(project.Id)).FullName)</td>
+                          }
+
+                          <td>@project.Company.Name</td>
+                          <td><span class="tag tag-success">@project.ProjectPriority.Name</span></td>
+                          <td><p>@project.StartDate.DateTime</p>
+                            <p>@project.EndDate.DateTime</p>
+                          </td>
+                          <td>@project.Archived.ToString()</td>
+                          <td>
+                              
+                              <div class="btn-group-vertical">
+                                <a class="btn btn-secondary" asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id">Details</a>
+                                <a class="btn btn-info" asp-controller="Projects" asp-action="Edit" asp-route-id="@project.Id">Edit</a>
+                                @if (project.Archived)
+                                {
+                                                        <a class="btn btn-success" asp-controller="Projects" asp-action="Restore" asp-route-id="@project.Id">Restore</a>
+                                }
+                                else
+                                {
+                                                        <a class="btn btn-danger" asp-controller="Projects" asp-action="Archive" asp-route-id="@project.Id">Archive</a>
+
+                                }
+                              </div>
+                          </td>
+                        </tr>
+                      }
+                    
+                    
+                  </tbody>
+                </table>
+              </div>
+                   
+                    <!-- /.card-body -->
+                    <div class="card-footer clearfix">
+                        <a asp-controller="Tickets" asp-action="AllTickets" class="btn btn-primary float-right" >View More</a>
+                    </div>
+                    </div>
+                </div>
+
+                            </div>
+                        </section>
+
+                        <section class="" style="width:50vw" >
+            <div>
+                            <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="ion ion-clipboard mr-1"></i>
+                            My Tickets
+                        </h3>
+
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body" style="">
+                        <div class="card-body table-responsive p-0" >
+                <table class="table table-hover text-nowrap">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Developer</th>
+                      <th>Status</th>
+                      <th>Priority</th>
+                      <th>Type</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      @{
+                          int countTickets = 0;
+                        }
+                      @if (Model.UserTickets.Count == 0) {
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            
+                                            <td style="text-align:center"><h4>No Tickets</h4></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                      }
+                      @foreach(Ticket ticket in Model.UserTickets)
+                      {
+                          
+                          
+                          if (countTickets == 10)
+                          {
+                              break;
+                          }
+                          countTickets += 1;
+                          <tr>
+                          <td>@ticket.Title</td>
+                          @if ((await TicketService.GetTicketDeveloperAsync(ticket.Id, companyId)) == null)
+                          {
+                                            if ((await RoleService.IsUserInRoleAsync(ITUser, nameof(RoleEnum.Admin))) || ((await ProjectService.GetProjectManagerAsync(ticket.ProjectId)).Id == ITUser.Id))
+                                            {
+                                                    <td> <a asp-controller="Tickets" asp-action="AssignDeveloper" asp-route-id="@ticket.Id" class="btn btn-primary">Assign Dev</a></td>
+                                            }
+                                            else
+                                            {
+                                                    <td>No Developer</td>
+                                            }
+                              
+                          }
+                          else 
+                          {
+                                                <td><b>@((await TicketService.GetTicketDeveloperAsync(ticket.Id, companyId)).FullName)</b></td>
+                                        }
+                          <td>@ticket.TicketStatus.Name</td>
+                          <td><span class="tag tag-success">@ticket.TicketPriority.Name</span></td>
+                          <td>@ticket.TicketType.Name</td>
+                          <td>
+                              <div class="btn-group">
+                                <a class="btn btn-secondary" asp-controller="Tickets" asp-action="Details" asp-route-id="@ticket.Id">
+                                    Details
+                                  
+                                </a>
+                                <a class="btn btn-info" asp-controller="Tickets" asp-action="Edit" asp-route-id="@ticket.Id">
+                                    Edit
+                                </a>
+                                @if (ticket.Archived) {
+                                    <a class="btn btn-success" asp-controller="Tickets" asp-action="Restore" asp-route-id="@ticket.Id">
+                                      Restore
+                                    </a>
+                                } else {
+                                    <a class="btn btn-danger" asp-controller="Tickets" asp-action="Archive" asp-route-id="@ticket.Id">
+                                      Archive
+                                    </a>
+                                }
+                              </div>
+                          </td>
+                        </tr>
+                      }
+                    
+                    
+                  </tbody>
+                </table>
+              </div>
+                   
+                    <!-- /.card-body -->
+                    <div class="card-footer clearfix">
+                        <a asp-controller="Tickets" asp-action="AllTickets" class="btn btn-primary float-right" >View More</a>
+                    </div>
+                    </div>
+                </div>
+
+                            </div>
+                        </section>
+                    </div>
+                    <!-- /.row (main row) -->
+                </div><!-- /.container-fluid -->
+
+@section scripts {
+
+	<!--Google Charts-->
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+    <script>
+
+        var projectsByPriorityDonutData = [
+            @Model.Projects.Where(p=>p.ProjectPriority.Name == nameof(PriorityEnum.Low)).Count(),
+            @Model.Projects.Where(p=>p.ProjectPriority.Name == nameof(PriorityEnum.Medium)).Count(),
+            @Model.Projects.Where(p=>p.ProjectPriority.Name == nameof(PriorityEnum.High)).Count(),
+            @Model.Projects.Where(p=>p.ProjectPriority.Name == nameof(PriorityEnum.Urgent)).Count()];
+
+        //-------------
+        //- DONUT CHART - Project Priority
+        //-------------
+        // Get context with jQuery - using jQuery's .get() method.
+        var projectsByPriorityDonutChart = $('#donutChartProjectPriority').get(0).getContext('2d')
+        var projectsByPriorityDonutChartLabels = {
+            labels: [
+                'Low',
+                'Medium',
+                'High',
+                'Urgent',
+            ],
+            datasets: [
+                {
+                    data: projectsByPriorityDonutData, //[700, 500, 400, 600, 300, 100],
+                    backgroundColor: ['#f56954', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                }
+            ]
+        }
+        var projectsByPriorityDonutChartOptions = {
+            maintainAspectRatio: false,
+            responsive: true,
+        }
+        //Create pie or douhnut chart
+        // You can switch between pie and douhnut using the method below.
+        new Chart(projectsByPriorityDonutChart, {
+            type: 'doughnut',
+            data: projectsByPriorityDonutChartLabels,
+            options: projectsByPriorityDonutChartOptions
+        })
+
+
+        var ticketsByPriorityDonutData = [
+            @Model.Tickets.Where(t=>t.TicketPriority.Name == nameof(PriorityEnum.Low)).Count(),
+            @Model.Tickets.Where(t=>t.TicketPriority.Name == nameof(PriorityEnum.Medium)).Count(),
+            @Model.Tickets.Where(t=>t.TicketPriority.Name == nameof(PriorityEnum.High)).Count(),
+            @Model.Tickets.Where(t=>t.TicketPriority.Name == nameof(PriorityEnum.Urgent)).Count()];
+
+        //-------------
+        //- DONUT CHART - Ticket Priority
+        //-------------
+        // Get context with jQuery - using jQuery's .get() method.
+        var ticketsByPriorityDonutChart = $('#donutChartTicketPriority').get(0).getContext('2d')
+        var ticketsByPriorityDonutChartLabels = {
+            labels: [
+                'Low',
+                'Medium',
+                'High',
+                'Urgent',
+            ],
+            datasets: [
+                {
+                    data: ticketsByPriorityDonutData, //[700, 500, 400, 600, 300, 100],
+                    backgroundColor: ['#f56954', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                }
+            ]
+        }
+        var ticketsByPriorityDonutChartOptions = {
+            maintainAspectRatio: false,
+            responsive: true,
+        }
+        //Create pie or douhnut chart
+        // You can switch between pie and douhnut using the method below.
+        new Chart(ticketsByPriorityDonutChart, {
+            type: 'doughnut',
+            data: ticketsByPriorityDonutChartLabels,
+            options: ticketsByPriorityDonutChartOptions
+        })
+
+
+
+        
+        var unassignedProjectsDonutData = [
+            @assignedProjectsCount,
+            @unassignedProjectsCount
+        ]
+
+        //-------------
+        //- DONUT CHART - Unassigned Projects
+        //-------------
+        // Get context with jQuery - using jQuery's .get() method.
+        var unassignedProjectsDonutChart = $('#donutChartUnassignedProjects').get(0).getContext('2d')
+        var unassignedProjectsDonutChartLabels = {
+            labels: [
+                'Assigned',
+                'Unassigned',
+            ],
+            datasets: [
+                {
+                    data: unassignedProjectsDonutData, //[700, 500, 400, 600, 300, 100],
+                    backgroundColor: ['#3c8dbc', '#d2d6de'],
+                }
+            ]
+        }
+        var unassignedProjectsDonutChartOptions = {
+            maintainAspectRatio: false,
+            responsive: true,
+        }
+        //Create pie or douhnut chart
+        // You can switch between pie and douhnut using the method below.
+        new Chart(unassignedProjectsDonutChart, {
+            type: 'doughnut',
+            data: unassignedProjectsDonutChartLabels,
+            options: unassignedProjectsDonutChartOptions
+        })
+
+
+        
+
+        var unassignedTicketsDonutData = [
+            @assignedTicketsCount,
+            @unassignedTicketsCount
+        ]
+
+        //-------------
+        //- DONUT CHART - Unassigned Tickets
+        //-------------
+        // Get context with jQuery - using jQuery's .get() method.
+        var unassignedTicketsDonutChart = $('#donutChartUnassignedTickets').get(0).getContext('2d')
+        var unassignedTicketsDonutChartLabels = {
+            labels: [
+                'Assigned',
+                'Unassigned',
+            ],
+            datasets: [
+                {
+                    data: unassignedTicketsDonutData, //[700, 500, 400, 600, 300, 100],
+                    backgroundColor: ['#3c8dbc', '#d2d6de'],
+                }
+            ]
+        }
+        var unassignedTicketsDonutChartOptions = {
+            maintainAspectRatio: false,
+            responsive: true,
+        }
+        //Create pie or douhnut chart
+        // You can switch between pie and douhnut using the method below.
+        new Chart(unassignedTicketsDonutChart, {
+            type: 'doughnut',
+            data: unassignedTicketsDonutChartLabels,
+            options: unassignedTicketsDonutChartOptions
+        })
+
+
+        //---------------------
+        //- Tickets/Developer by Project BAR CHART -
+        //---------------------
+        @{
+            string projectNames = "";
+            string ticketCount = "";
+            string developerCount = "";
+            int projectCount = 0;
+            foreach (Project p in await ProjectService.GetAllProjectsByCompany(companyId))
+            {
+                projectCount += 1;
+                projectNames += $"{p.Name} ||| ";
+                ticketCount += p.Tickets.Count() + " ||| ";
+                developerCount += p.Members.Count() + " ||| ";
+            }
+            
+        }
+        //var arrayOfArrays = JSON.parse('@Html.Raw(projectNames)');
+        var projectNamesData = "@(projectNames)".split(" ||| ");
+        projectNamesData.pop()
+        var ticketCountData = "@(ticketCount)".split(" ||| ");
+        ticketCountData.pop()
+        var developerCountData = "@(developerCount)".split(" ||| ");
+        developerCountData.pop()
+        
+        
+        var ticketsDevsData = {
+            labels: projectNamesData,
+          datasets: [
+            {
+              label               : 'Tickets',
+              backgroundColor     : 'rgba(60,141,188,0.9)',
+              borderColor         : 'rgba(60,141,188,0.8)',
+              pointRadius          : false,
+              pointColor          : '#3b8bba',
+              pointStrokeColor    : 'rgba(60,141,188,1)',
+              pointHighlightFill  : '#fff',
+              pointHighlightStroke: 'rgba(60,141,188,1)',
+              data                : ticketCountData
+            },
+            {
+              label               : 'Developers',
+              backgroundColor     : 'rgba(210, 214, 222, 1)',
+              borderColor         : 'rgba(210, 214, 222, 1)',
+              pointRadius         : false,
+              pointColor          : 'rgba(210, 214, 222, 1)',
+              pointStrokeColor    : '#c1c7d1',
+              pointHighlightFill  : '#fff',
+              pointHighlightStroke: 'rgba(220,220,220,1)',
+              data                : developerCountData
+            },
+          ]
+        }
+
+
+        var ticketsDevsChartCanvas = $('#ticketsDevsBarChart').get(0).getContext('2d')
+        var ticketsDevsChartData = $.extend(true, {}, ticketsDevsData)
+        var temp0 = ticketsDevsData.datasets[0]
+        var temp1 = ticketsDevsData.datasets[1]
+        ticketsDevsChartData.datasets[0] = temp1
+        ticketsDevsChartData.datasets[1] = temp0
+
+        var ticketsDevsChartOptions = {
+          responsive              : true,
+          maintainAspectRatio     : false,
+          datasetFill             : false
+        }
+
+        new Chart(ticketsDevsChartCanvas, {
+          type: 'bar',
+          data: ticketsDevsChartData,
+          options: ticketsDevsChartOptions
+        })
+
+
+	</script>
+}

@@ -1,0 +1,162 @@
+﻿@model IEnumerable<IssueTracker.Models.Ticket>
+
+@using IssueTracker.Models.Enums
+@using Microsoft.AspNetCore.Identity
+@using IssueTracker.Services.Interfaces
+
+@inject UserManager<IssueTrackerUser> UserManager
+@inject IITTicketService TicketService
+@inject IITProjectService ProjectService
+@inject IITRolesService RoleService
+
+@{
+    ViewData["Title"] = "My Tickets";
+
+    IssueTrackerUser user = await UserManager.GetUserAsync(User);
+}
+
+<h1>All Tickets</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedOn)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Updated)
+            </th>
+
+            <th>
+                @Html.DisplayNameFor(model => model.Project)
+            </th>
+            <th>
+                Type
+            </th>
+            <th>
+                Priority
+            </th>
+            <th>
+                Status
+            </th>
+            <th>
+                Owner
+                @{
+                    /*Html.DisplayNameFor(model => model.OwnerUser)*/
+                }
+            </th>
+            <th>
+                Developer
+                @{
+                    /*Html.DisplayNameFor(model => model.DeveloperUser)*/
+                }
+            </th>
+            <th>
+
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CreatedOn)
+                </td>
+                <td>
+                    @if (item.Updated != null)
+                    {
+                        Html.DisplayFor(modelItem => item.Updated);
+                    }
+                    else
+                    {
+                        <div>Not Updated</div>
+                    }
+
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.Project.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TicketType.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TicketPriority.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TicketStatus.Name)
+                </td>
+                <td>
+                    @if (item.OwnerUser != null)
+                    {
+                        Html.DisplayFor(modelItem => item.OwnerUser.FullName);
+                    }
+                    else
+                    {
+                        <div>System</div>
+                    }
+
+                </td>
+                @if (item.DeveloperUser != null)
+                {
+                    <td>@Html.DisplayFor(modelItem => item.DeveloperUser.FullName)</td>
+                }
+                else
+                {
+                    if ((await RoleService.IsUserInRoleAsync(user, nameof(RoleEnum.Admin))) || ((await ProjectService.GetProjectManagerAsync(item.ProjectId))?.Id == user.Id))
+                    {
+                        <td> <a asp-controller="Tickets" asp-action="AssignDeveloper" asp-route-id="@item.Id" class="btn btn-primary">Assign Dev</a></td>
+                    }
+                    else
+                    {
+                        <td>No Developer</td>
+                    }
+                }
+                <td>
+                    <div class="btn-group-vertical">
+                        <a class="btn btn-secondary" asp-action="Details" asp-route-id="@item.Id">Details</a>
+                        @{
+                            bool isAdminRole = User.IsInRole(nameof(RoleEnum.Admin));
+                            bool isProjectManager = await ProjectService.IsUserProjectManagerAsync(user.Id, item.ProjectId);
+                            bool isOwnerUser = item.OwnerUserId == user.Id;
+                            bool isDeveloperUser = item.DeveloperUserId == user.Id;
+                        }
+                        @if (isAdminRole || isProjectManager || isOwnerUser || isDeveloperUser)
+                        {
+                            <a class="btn btn-info" asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+
+
+                        }
+                        @if (isAdminRole || isProjectManager)
+                        {
+                            @if (item.Archived)
+                            {
+                                <a class="btn btn-success" asp-action="Restore" asp-route-id="@item.Id">Restore</a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-danger" asp-action="Archive" asp-route-id="@item.Id">Archive</a>
+                            }
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

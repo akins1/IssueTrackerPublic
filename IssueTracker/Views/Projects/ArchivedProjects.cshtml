@@ -1,0 +1,122 @@
+﻿@model IEnumerable<IssueTracker.Models.Project>
+
+@using IssueTracker.Models.Enums
+@using IssueTracker.Services.Interfaces
+
+@inject IITProjectService ProjectService
+
+@{
+    ViewData["Title"] = "Unssigned Projects";
+    bool isAuthorizedRole = User.IsInRole(nameof(RoleEnum.ProjectManager)) || User.IsInRole(nameof(RoleEnum.Admin));
+    bool isAdminRole = User.IsInRole(nameof(RoleEnum.Admin));
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Archived Projects</h1>
+            </div><!-- /.col -->
+            <!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+
+<section class="">
+    <div>
+        <div class="card col-12 text-wrap">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="ion ion-clipboard mr-1"></i>
+                    Archived Projects
+                </h3>
+
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-wrap">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Project Manager</th>
+                                <th>Company</th>
+                                <th>Priority</th>
+                                <th>
+                                    Start/End Date
+                                </th>
+                                <th>Archived</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (Project project in Model)
+                            {
+
+
+                                <tr>
+                                    <td> <img id="imageFileData" style="width:100px;height:80px" class="img-fluid img-thumbnail" src="data:image/*;base64,@(Convert.ToBase64String(project.ImageFileData))" /></td>
+                                    <td>@project.Name</td>
+                                    <td>@project.Description</td>
+                                    @if ((await ProjectService.GetProjectManagerAsync(project.Id)) == null)
+                                    {
+                                        if (isAdminRole)
+                                        {
+                                            <td> <a asp-controller="Projects" asp-action="AssignPM" asp-route-projectId="@project.Id" class="btn btn-info">Assign PM</a></td>
+                                        }
+                                        else
+                                        {
+                                            <td>No Developer</td>
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        <td>@((await ProjectService.GetProjectManagerAsync(project.Id)).FullName)</td>
+                                    }
+
+                                    <td>@project.Company.Name</td>
+                                    <td><span class="tag tag-success">@project.ProjectPriority.Name</span></td>
+                                    <td>
+                                        <p>@project.StartDate.DateTime</p>
+                                        <p>@project.EndDate.DateTime</p>
+                                    </td>
+                                    <td>@project.Archived.ToString()</td>
+
+                                    <td>
+
+                                        <div class="btn-group-vertical">
+                                            <a class="btn btn-secondary" style="margin-bottom:5px" asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id">Details</a>
+                                            <a class="btn btn-info" style="margin-bottom:5px" asp-controller="Projects" asp-action="Edit" asp-route-id="@project.Id">Edit</a>
+                                            @if (project.Archived)
+                                            {
+                                                <a class="btn btn-success" asp-controller="Projects" asp-action="Restore" asp-route-id="@project.Id">Restore</a>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn btn-danger" asp-controller="Projects" asp-action="Archive" asp-route-id="@project.Id">Archive</a>
+
+                                            }
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+

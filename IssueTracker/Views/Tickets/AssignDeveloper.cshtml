@@ -1,0 +1,50 @@
+﻿@model IssueTracker.Models.ViewModels.AssignDeveloperViewModel
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="container">
+    <h2>Assign Developer for</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <h3>@Model.Ticket.Title</h3>
+            <a style="font-size:small" asp-action="Details" asp-controller="Projects" asp-route-id="@Model.Ticket.ProjectId">View @Model.Ticket.Project.Name</a>
+
+            <div class="card">
+                <div class="card-header">
+                    <label class="control-label">
+                        Assign Developer for Ticket
+                    </label>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="AssignDeveloper" asp-controller="Tickets">
+
+                        <input hidden asp-for="Ticket.Id" />
+
+                        <p>Description: @Model.Ticket.Description</p>
+
+                        <div class="form-group">
+                            <label class="col-form-label">Select Developer</label>
+
+                            <select required asp-for="DeveloperId" class="form-control" asp-items="@Model.Developers">
+                                <option>
+                                    
+                                </option>
+                            </select>
+
+                        </div>
+                        <div class="form-group mt-3">
+                            <input type="submit" value="Assign" class="btn btn-primary" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <a class="btn btn-secondary" href="javascript:history.back()">Back</a>
+    </div>
+</div>

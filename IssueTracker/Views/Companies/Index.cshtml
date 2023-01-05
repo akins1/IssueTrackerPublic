@@ -1,0 +1,91 @@
+﻿@model IEnumerable<IssueTracker.Models.Company>
+
+@using IssueTracker.Models.Enums
+@using IssueTracker.Services.Interfaces
+
+@inject IITProjectService ProjectService
+
+@{
+    ViewData["Title"] = "Index";
+    bool isAuthorizedRole = User.IsInRole(nameof(RoleEnum.ProjectManager)) || User.IsInRole(nameof(RoleEnum.Admin));
+    bool isAdminRole = User.IsInRole(nameof(RoleEnum.Admin));
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Companies</h1>
+            </div><!-- /.col -->
+            <!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+@if (isAdminRole)
+{
+    <p>
+        <a class="btn btn-primary" asp-action="Create">Create Company</a>
+    </p>
+}
+
+
+<section class="">
+    <div>
+        <div class="card col-12 text-wrap">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="ion ion-clipboard mr-1"></i>
+                    Companies
+                </h3>
+
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-wrap">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Company Description</th>
+                                <th>Actions</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (Company company in Model)
+                            {
+
+
+                                <tr>
+                                    <td>@company.Name</td>
+                                    <td>@company.Description</td>
+                                
+                                    <td>
+
+                                        <div class="btn-group-vertical">
+                                            <a class="btn btn-secondary" style="margin-bottom:5px" asp-controller="Projects" asp-action="Details" asp-route-id="@company.Id">Details</a>
+                                            @if (isAdminRole)
+                                            {
+                                                <a class="btn btn-info" style="margin-bottom:5px" asp-controller="Projects" asp-action="Edit" asp-route-id="@company.Id">Edit</a>
+                                            }
+                                            
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+

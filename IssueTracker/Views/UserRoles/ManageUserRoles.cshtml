@@ -1,0 +1,35 @@
+﻿@model IEnumerable<IssueTracker.Models.ViewModels.ManageUserRolesViewModel>
+
+<div class="row">
+    <h2 class="m-t-0 h3"><b>Manage Member Roles </b></h2>
+    @foreach (var member in Model)
+    {
+        <div class="row">
+            <div class="card col-4 m-3">
+                <div class="card-body">
+                    <p class="text-muted font-13 m-b-30">
+                        This form displays the current roles assigned to the user: <strong class="text-info">@member.ITUser.FullName</strong>.
+                        Use the dropdown to select the roles this user should be assigned.
+                        Once roles are selected, click "Assign Roles" to submit the form.
+                    </p>
+                    <hr />
+                    <form asp-action="ManageUserRoles" asp-controller="UserRoles" method=post>
+                        <input type="hidden" asp-for="@member.ITUser.Id" />
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="" asp-for="@member.Roles">Roles for @member.ITUser.FullName</label>
+                                    <select class="form-control" asp-for="@member.SelectedRoles" asp-items="@member.Roles" multiple></select>
+                                    <hr />
+                                </div>
+                                <div class="form-group">
+                                    <input class="btn btn-info" type="submit" value="Assign Role" />
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
