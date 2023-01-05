@@ -6,6 +6,8 @@ Select login and try out one of the demo users!
 
 Link: https://issuetrackerakins1.azurewebsites.net/
 
+![Image of Dashboard View](dashboard_view.png)
+
 ## Technologies
 - ASP.NET Core MVC
 - PostgreSQL
