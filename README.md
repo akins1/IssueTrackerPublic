@@ -1,4 +1,5 @@
 # Issue Tracker
+
 Issue Tracker is a web application written in ASP.NET Core MVC that lets users create, manage, modify, and archive Tickets to track the bugs/issues of a Project
 
 If you are interested in trying out the demo, this project is deployed to Azure App Service [here](https://issuetrackerakins1.azurewebsites.net/).
@@ -9,6 +10,7 @@ Link: https://issuetrackerakins1.azurewebsites.net/
 ![Image of Dashboard View](dashboard_view.png)
 
 ## Technologies
+
 - ASP.NET Core MVC
 - PostgreSQL
 - ASP.NET Identity
@@ -17,9 +19,10 @@ Link: https://issuetrackerakins1.azurewebsites.net/
 - [AdminLTE template](https://adminlte.io/)
 
 ## Features
+
 - ### Users
   - are able to authenticate into the application by registering an account or logging in
-  - are assigned roles with different levels of authority (Role-Based Access Control): 
+  - are assigned roles with different levels of authority (Role-Based Access Control):
     - Admin
     - Project Manager
     - Developer
@@ -34,14 +37,16 @@ Link: https://issuetrackerakins1.azurewebsites.net/
   - are housed within Projects
   - contains metadata such as: title, description, date created, creator, developer, type, priority, status, etc.
   - can have a single Developer assigned to it
-  - can be created, edited, and archived/restored independent of its Project by Admins, Project Managers, and Developers 
+  - can be created, edited, and archived/restored independent of its Project by Admins, Project Managers, and Developers
   - contains a history of changes to metadata
   - contains a list of comments that Users make
   - contains attatchments for different document formats (images, PDFs)
 - ### Dashboard
   - contains charts displaying general information about Project/Ticket distributions
   - lists all the Users in the system
-  
-## Pending
-- NullReferenceExceptions in AllTickets and AllProjects Views when querying items with no assigned PM/Devs (for PM and Dev roles). 
-This bug is fixed, but Github Actions limit was reached, so awaiting next month for reset.
+
+## Pending Deployment
+
+- NullReferenceExceptions in AllTickets and AllProjects Views when querying items with no assigned PM/Devs (for PM and Dev roles).
+- Hid buttons that should be only visible to a project's Project Managers
+  These bugs have been fixed, but Github Actions limit was reached, so awaiting next month for reset.
