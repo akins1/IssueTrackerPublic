@@ -49,4 +49,5 @@ Link: https://issuetrackerakins1.azurewebsites.net/
 
 - NullReferenceExceptions in AllTickets and AllProjects Views when querying items with no assigned PM/Devs (for PM and Dev roles).
 - Hid buttons that should be only visible to a project's Project Managers
-  These bugs have been fixed, but Github Actions limit was reached, so awaiting next month for reset.
+
+These bugs have been fixed, but Github Actions limit was reached, so awaiting next month for reset.
