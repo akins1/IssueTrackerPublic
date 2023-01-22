@@ -1,8 +1,10 @@
 ﻿@model IEnumerable<IssueTracker.Models.Project>
 @using IssueTracker.Models.Enums
 @using IssueTracker.Services.Interfaces
+@using Microsoft.AspNetCore.Identity
 
 @inject IITProjectService ProjectService
+@inject UserManager<IssueTrackerUser> UserManager
 @{
     ViewData["Title"] = "My Projects";
     bool isAuthorizedRole = User.IsInRole(nameof(RoleEnum.ProjectManager)) || User.IsInRole(nameof(RoleEnum.Admin));
@@ -94,15 +96,21 @@
 
                                         <div class="btn-group-vertical">
                                             <a class="btn btn-secondary" style="margin-bottom:5px" asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id">Details</a>
-                                            <a class="btn btn-info" style="margin-bottom:5px" asp-controller="Projects" asp-action="Edit" asp-route-id="@project.Id">Edit</a>
-                                            @if (project.Archived)
-                                            {
-                                                <a class="btn btn-success" asp-controller="Projects" asp-action="Restore" asp-route-id="@project.Id">Restore</a>
+                                            @{
+                                                bool isPM = (await ProjectService.GetProjectManagerAsync(project.Id))?.Id == (await UserManager.GetUserAsync(User))?.Id;
                                             }
-                                            else
+                                            @if (isPM || isAdminRole)
                                             {
-                                                <a class="btn btn-danger" asp-controller="Projects" asp-action="Archive" asp-route-id="@project.Id">Archive</a>
+                                                <a class="btn btn-info" style="margin-bottom:5px" asp-controller="Projects" asp-action="Edit" asp-route-id="@project.Id">Edit</a>
+                                                @if (project.Archived)
+                                                {
+                                                    <a class="btn btn-success" asp-controller="Projects" asp-action="Restore" asp-route-id="@project.Id">Restore</a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="btn btn-danger" asp-controller="Projects" asp-action="Archive" asp-route-id="@project.Id">Archive</a>
 
+                                                }
                                             }
                                         </div>
                                     </td>

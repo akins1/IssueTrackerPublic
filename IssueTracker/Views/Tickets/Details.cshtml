@@ -190,10 +190,13 @@
 													Description
 													<input asp-for="@Model.Attachments.FirstOrDefault().Description" type="text" class="form-control" />
 												</label><br />
-												<label class="btn btn-outline-primary btn-sm">
-													<input asp-for="@Model.Attachments.FirstOrDefault().FormFile" type="file" class="form-control-file" />
-												</label>
-												<button type="submit" class="btn btn-outline-secondary btn-sm md-btn-flat">Submit</button>
+												@if (isProjectManager || isAdmin)
+												{
+													<label class="btn btn-outline-primary btn-sm">
+														<input asp-for="@Model.Attachments.FirstOrDefault().FormFile" type="file" class="form-control-file" />
+													</label>
+													<button type="submit" class="btn btn-outline-secondary btn-sm md-btn-flat">Submit</button>
+												}
 											</div>
 										</form>
 									</div>
